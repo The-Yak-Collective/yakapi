@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -39,29 +40,46 @@ var (
 	})
 )
 
-func me(w http.ResponseWriter, r *http.Request) {
-	user, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
+func errorResponse(w http.ResponseWriter, respErr error) error {
+	resp := struct {
+		Error string `json:"error"`
+	}{Error: respErr.Error()}
+
+	return sendResponse(w, resp, http.StatusInternalServerError)
+}
+
+func sendResponse(w http.ResponseWriter, resp interface{}, statusCode int) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	err := json.NewEncoder(w).Encode(resp)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		return err
+	}
+
+	return nil
+}
+
+func me(w http.ResponseWriter, r *http.Request) {
+	whois, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
+	if err != nil {
+		errorResponse(w, errors.New("unknown"))
 		log.Errorw("whois failure", "error", err)
 		return
 	}
 
-	log.Infow("hi there", "remote", r.RemoteAddr, "resolved", user.UserProfile.DisplayName)
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Name   string `json:"name"`
 		Login  string `json:"login"`
 		Device string `json:"device"`
 	}{
-		Name:   user.UserProfile.DisplayName,
-		Login:  user.UserProfile.LoginName,
-		Device: user.Node.Hostinfo.Hostname(),
+		Name:   whois.UserProfile.DisplayName,
+		Login:  whois.UserProfile.LoginName,
+		Device: whois.Node.Hostinfo.Hostname(),
 	}
 
-	err = json.NewEncoder(w).Encode(resp)
+	err = sendResponse(w, &resp, http.StatusOK)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error encoding response: %v\n", err)
+		log.Errorw("error sending response", "err", err)
 		return
 	}
 }
@@ -69,7 +87,6 @@ func me(w http.ResponseWriter, r *http.Request) {
 func homev1(w http.ResponseWriter, r *http.Request) {
 	opsProcessed.Inc()
 
-	w.Header().Set("Content-Type", "application/json")
 	resp := struct {
 		Name      string     `json:"name"`
 		UpTime    int64      `json:"uptime"`
@@ -84,7 +101,7 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	err := json.NewEncoder(w).Encode(resp)
+	err := sendResponse(w, resp, http.StatusOK)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error encoding response: %v\n", err)
 		return

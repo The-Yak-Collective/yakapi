@@ -39,7 +39,7 @@ func doFwd(ctx context.Context, args []string) error {
 
 	duration := time.Duration(durationArg) * time.Millisecond * 10
 
-	err = execMotorAdapter(ctx, []string{"motorA:0.75", "motorB:0.75"})
+	err = execMotorAdapter(ctx, []string{"motor1:-0.75", "motor2:-0.75"})
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func doFwd(ctx context.Context, args []string) error {
 	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
 	time.Sleep(duration)
 
-	err = execMotorAdapter(ctx, []string{"motorA:0.0", "motorB:0.0"})
+	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
 	if err != nil {
 		return err
 	}

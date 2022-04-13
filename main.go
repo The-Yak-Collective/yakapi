@@ -3,9 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -13,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rhettg/batteries/yakapi/internal/ci"
 	mw "github.com/rhettg/batteries/yakapi/internal/mw"
 	"tailscale.com/client/tailscale"
 )
@@ -40,12 +39,12 @@ var (
 	})
 )
 
-func errorResponse(w http.ResponseWriter, respErr error) error {
+func errorResponse(w http.ResponseWriter, respErr error, statusCode int) error {
 	resp := struct {
 		Error string `json:"error"`
 	}{Error: respErr.Error()}
 
-	return sendResponse(w, resp, http.StatusInternalServerError)
+	return sendResponse(w, resp, statusCode)
 }
 
 func sendResponse(w http.ResponseWriter, resp interface{}, statusCode int) error {
@@ -62,7 +61,7 @@ func sendResponse(w http.ResponseWriter, resp interface{}, statusCode int) error
 func me(w http.ResponseWriter, r *http.Request) {
 	whois, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
-		errorResponse(w, errors.New("unknown"))
+		errorResponse(w, errors.New("unknown"), http.StatusInternalServerError)
 		log.Errorw("whois failure", "error", err)
 		return
 	}
@@ -80,6 +79,50 @@ func me(w http.ResponseWriter, r *http.Request) {
 	err = sendResponse(w, &resp, http.StatusOK)
 	if err != nil {
 		log.Errorw("error sending response", "err", err)
+		return
+	}
+}
+
+func handleCI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		errorResponse(w, errors.New("POST required"), http.StatusMethodNotAllowed)
+		return
+	}
+
+	if r.Header.Get("content-type") != "application/json" {
+		errorResponse(w, errors.New("application/json required"), http.StatusUnsupportedMediaType)
+		return
+	}
+
+	req := struct {
+		Command string `json:"command"`
+	}{}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	defer r.Body.Close()
+
+	if err != nil {
+		log.Errorw("failed parsing body", "error", err)
+		errorResponse(w, errors.New("failed parsing body"), http.StatusBadRequest)
+		return
+	}
+
+	err = ci.Accept(r.Context(), req.Command)
+	if err != nil {
+		log.Errorw("failed accepting ci command", "error", err)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	resp := struct {
+		Result string `json:"result"`
+	}{
+		Result: "ok",
+	}
+
+	err = sendResponse(w, resp, http.StatusAccepted)
+	if err != nil {
+		log.Errorw("error sending response", "error", err)
 		return
 	}
 }
@@ -103,7 +146,7 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 
 	err := sendResponse(w, resp, http.StatusOK)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error encoding response: %v\n", err)
+		log.Errorw("error sending response", "error", err)
 		return
 	}
 }
@@ -128,6 +171,7 @@ func main() {
 	http.Handle("/", logmw(http.HandlerFunc(home)))
 	http.Handle("/v1", logmw(http.HandlerFunc(homev1)))
 	http.Handle("/v1/me", logmw(http.HandlerFunc(me)))
+	http.Handle("/v1/ci", logmw(http.HandlerFunc(handleCI)))
 	http.Handle("/metrics", logmw(promhttp.Handler()))
 
 	http.ListenAndServe(":8080", nil)

@@ -30,9 +30,30 @@ func Accept(ctx context.Context, cmd string) error {
 		return doLT(ctx, f[1:])
 	case "rt":
 		return doRT(ctx, f[1:])
+	default:
+		return errors.New("unknown command")
+	}
+}
+
+func parseDurationArg(arg string) (time.Duration, error) {
+	durationArg, err := strconv.ParseInt(arg, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse duration: %w", err)
 	}
 
-	return nil
+	duration := time.Duration(durationArg) * time.Millisecond * 10
+
+	return duration, nil
+}
+
+func parseAngleArg(arg string) (time.Duration, error) {
+	angleArg, err := strconv.ParseInt(arg, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse duration: %w", err)
+	}
+
+	duration := time.Duration(spinDurationSecs*(float64(angleArg)/90.0)) * time.Second
+	return duration, nil
 }
 
 func doFwd(ctx context.Context, args []string) error {
@@ -40,22 +61,12 @@ func doFwd(ctx context.Context, args []string) error {
 		return errors.New("invalid arguments")
 	}
 
-	durationArg, err := strconv.ParseInt(args[0], 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse duration: %w", err)
-	}
-
-	duration := time.Duration(durationArg) * time.Millisecond * 10
-
-	err = execMotorAdapter(ctx, []string{"motor1:-0.75", "motor2:-0.75"})
+	duration, err := parseDurationArg(args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
-	time.Sleep(duration)
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	err = motorAndStop(ctx, -0.75, -0.75, duration)
 	if err != nil {
 		return err
 	}
@@ -68,22 +79,12 @@ func doFfwd(ctx context.Context, args []string) error {
 		return errors.New("invalid arguments")
 	}
 
-	durationArg, err := strconv.ParseInt(args[0], 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse duration: %w", err)
-	}
-
-	duration := time.Duration(durationArg) * time.Millisecond * 10
-
-	err = execMotorAdapter(ctx, []string{"motor1:-1.0", "motor2:-1.0"})
+	duration, err := parseDurationArg(args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
-	time.Sleep(duration)
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	err = motorAndStop(ctx, -1.0, -1.0, duration)
 	if err != nil {
 		return err
 	}
@@ -96,22 +97,12 @@ func doBck(ctx context.Context, args []string) error {
 		return errors.New("invalid arguments")
 	}
 
-	durationArg, err := strconv.ParseInt(args[0], 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse duration: %w", err)
-	}
-
-	duration := time.Duration(durationArg) * time.Millisecond * 10
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.75", "motor2:0.75"})
+	duration, err := parseDurationArg(args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
-	time.Sleep(duration)
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	err = motorAndStop(ctx, 0.75, 0.75, duration)
 	if err != nil {
 		return err
 	}
@@ -126,22 +117,12 @@ func doRT(ctx context.Context, args []string) error {
 		return errors.New("invalid arguments")
 	}
 
-	angleArg, err := strconv.ParseInt(args[0], 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse duration: %w", err)
-	}
-
-	duration := time.Duration(spinDurationSecs*(float64(angleArg)/90.0)) * time.Second
-
-	err = execMotorAdapter(ctx, []string{"motor1:-0.75", "motor2:0.75"})
+	duration, err := parseAngleArg(args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
-	time.Sleep(duration)
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	err = motorAndStop(ctx, -0.75, 0.75, duration)
 	if err != nil {
 		return err
 	}
@@ -154,22 +135,12 @@ func doLT(ctx context.Context, args []string) error {
 		return errors.New("invalid arguments")
 	}
 
-	angleArg, err := strconv.ParseInt(args[0], 10, 64)
-	if err != nil {
-		return fmt.Errorf("failed to parse duration: %w", err)
-	}
-
-	duration := time.Duration(spinDurationSecs*(float64(angleArg)/90.0)) * time.Second
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.75", "motor2:-0.75"})
+	duration, err := parseAngleArg(args[0])
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("sleeping for %.3fs\n", duration.Seconds())
-	time.Sleep(duration)
-
-	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	err = motorAndStop(ctx, 0.75, -0.75, duration)
 	if err != nil {
 		return err
 	}
@@ -193,6 +164,26 @@ func execMotorAdapter(ctx context.Context, args []string) error {
 	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed running motor adapter: %w", err)
+	}
+
+	return nil
+}
+
+func motorAndStop(ctx context.Context, throttle1, throttle2 float64, d time.Duration) error {
+	err := execMotorAdapter(ctx,
+		[]string{
+			fmt.Sprintf("motor1:%.2f", throttle1),
+			fmt.Sprintf("motor2:%.2f", throttle2)})
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("sleeping for %.3fs\n", d.Seconds())
+	time.Sleep(d)
+
+	err = execMotorAdapter(ctx, []string{"motor1:0.0", "motor2:0.0"})
+	if err != nil {
+		return err
 	}
 
 	return nil

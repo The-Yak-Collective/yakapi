@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"go.uber.org/zap"
@@ -125,6 +128,25 @@ func handleCI(w http.ResponseWriter, r *http.Request) {
 		log.Errorw("error sending response", "error", err)
 		return
 	}
+}
+
+func handleCamCapture(w http.ResponseWriter, r *http.Request) {
+	captureFile := os.Getenv("YAKAPI_CAM_CAPTURE_PATH")
+	if captureFile == "" {
+		err := errors.New("YAKAPI_CAM_CAPTURE_PATH not configured")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	content, err := ioutil.ReadFile(captureFile)
+	if err != nil {
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.WriteHeader(http.StatusOK)
+	w.Write(content)
 }
 
 func homev1(w http.ResponseWriter, r *http.Request) {

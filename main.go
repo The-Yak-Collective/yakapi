@@ -179,7 +179,6 @@ func main() {
 	logger, _ := zap.NewDevelopment()
 	defer logger.Sync() // flushes buffer, if any
 	log = logger.Sugar()
-	log.Infow("starting", "version", "1.0.0")
 
 	promauto.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "batteries_uptime_seconds",
@@ -194,7 +193,14 @@ func main() {
 	http.Handle("/v1", logmw(http.HandlerFunc(homev1)))
 	http.Handle("/v1/me", logmw(http.HandlerFunc(me)))
 	http.Handle("/v1/ci", logmw(http.HandlerFunc(handleCI)))
+	http.Handle("/v1/cam/capture", logmw(http.HandlerFunc(handleCamCapture)))
 	http.Handle("/metrics", logmw(promhttp.Handler()))
 
-	http.ListenAndServe(":8080", nil)
+	port := os.Getenv("YAKAPI_PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Infow("starting", "version", "1.0.0", "port", port)
+	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 }

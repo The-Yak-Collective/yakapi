@@ -163,6 +163,7 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 			{Name: "operator", Ref: "https://t.me/rhettg"},
 			{Name: "project", Ref: "https://github.com/rhettg/batteries"},
 			{Name: "metrics", Ref: "/metrics"},
+			{Name: "ci", Ref: "/v1/ci"},
 		},
 	}
 

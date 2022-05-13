@@ -37,7 +37,7 @@ func init() {
 
 var (
 	opsProcessed = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "batteries_processed_ops_total",
+		Name: "yakapi_processed_ops_total",
 		Help: "The total number of processed requests",
 	})
 )
@@ -157,14 +157,28 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 		UpTime    int64      `json:"uptime"`
 		Resources []resource `json:"resources"`
 	}{
-		Name:   "Batteries Not Included",
+		Name:   "YakAPI Server",
 		UpTime: int64(time.Since(startTime).Seconds()),
 		Resources: []resource{
-			{Name: "operator", Ref: "https://t.me/rhettg"},
-			{Name: "project", Ref: "https://github.com/rhettg/batteries"},
 			{Name: "metrics", Ref: "/metrics"},
 			{Name: "ci", Ref: "/v1/ci"},
+			{Name: "cam", Ref: "/v1/cam/capture"},
 		},
+	}
+
+	name := os.Getenv("YAKAPI_NAME")
+	if name != "" {
+		resp.Name = name
+	}
+
+	project := os.Getenv("YAKAPI_PROJECT")
+	if project != "" {
+		resp.Resources = append(resp.Resources, resource{Name: "project", Ref: project})
+	}
+
+	operator := os.Getenv("YAKAPI_OPERATOR")
+	if operator != "" {
+		resp.Resources = append(resp.Resources, resource{Name: "operator", Ref: operator})
 	}
 
 	err := sendResponse(w, resp, http.StatusOK)
@@ -182,8 +196,8 @@ func main() {
 	log = logger.Sugar()
 
 	promauto.NewGaugeFunc(prometheus.GaugeOpts{
-		Name: "batteries_uptime_seconds",
-		Help: "The uptime of the batteries service",
+		Name: "yakapi_uptime_seconds",
+		Help: "The uptime of the yakapi service",
 	}, func() float64 {
 		return float64(time.Since(startTime).Seconds())
 	})
@@ -203,5 +217,8 @@ func main() {
 	}
 
 	log.Infow("starting", "version", "1.0.0", "port", port)
-	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+	if err != nil {
+		log.Errorw("error from ListenAndServer", "error", err)
+	}
 }

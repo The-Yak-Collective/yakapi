@@ -3,6 +3,10 @@ set -e
 
 script/build
 
+# This is from tailscale dependency. I think it's fixed in
+# https://github.com/tailscale/tailscale/issues/4872 but isn't yet released.
+export ASSUME_NO_MOVING_GC_UNSAFE_RISK_IT_WITH=go1.19
+
 export YAKAPI_NAME="YakAPI (development)"
 export YAKAPI_PROJECT="https://github.com/rhettg/batteries/yakapi"
 export YAKAPI_MOTOR_ADAPTER="echo"

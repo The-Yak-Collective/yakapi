@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,9 +21,25 @@ import (
 	"tailscale.com/client/tailscale"
 )
 
+var (
+	//go:embed assets/*
+	assets embed.FS
+)
+
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Location", "/v1")
 	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func eyes(w http.ResponseWriter, r *http.Request) {
+	content, err := assets.ReadFile("assets/index.html")
+	if err != nil {
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(content)
 }
 
 type resource struct {
@@ -211,6 +228,7 @@ func main() {
 	http.Handle("/v1/ci", logmw(http.HandlerFunc(handleCI)))
 	http.Handle("/v1/cam/capture", logmw(http.HandlerFunc(handleCamCapture)))
 	http.Handle("/metrics", logmw(promhttp.Handler()))
+	http.Handle("/eyes", logmw(http.HandlerFunc(eyes)))
 
 	port := os.Getenv("YAKAPI_PORT")
 	if port == "" {

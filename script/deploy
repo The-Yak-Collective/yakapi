@@ -6,3 +6,4 @@ GOOS=linux GOARCH=arm GOARM=7 go build -o bin/yakapi-arm .
 
 echo "==> Deploying"
 scp ./bin/yakapi-arm bni:bin/yakapi
+ssh bni "sudo /usr/local/bin/install-yakapi /home/rhettg/bin/yakapi"

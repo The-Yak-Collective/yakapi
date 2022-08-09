@@ -2,7 +2,11 @@ module github.com/rhettg/batteries/yakapi
 
 go 1.17
 
-require github.com/prometheus/client_golang v1.12.1
+require (
+	github.com/prometheus/client_golang v1.12.1
+	go.uber.org/zap v1.21.0
+	tailscale.com v1.22.2
+)
 
 require (
 	github.com/akutz/memconn v0.1.0 // indirect
@@ -16,7 +20,6 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/mem v0.0.0-20210711025021-927187094b94 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20211027215541-db492cf91b37 // indirect
@@ -24,5 +27,4 @@ require (
 	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	inet.af/netaddr v0.0.0-20211027220019-c74959edd3b6 // indirect
-	tailscale.com v1.22.2 // indirect
 )

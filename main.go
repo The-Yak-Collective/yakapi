@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"time"
 
 	"go.uber.org/zap"
@@ -216,7 +217,12 @@ func main() {
 		port = "8080"
 	}
 
-	log.Infow("starting", "version", "1.0.0", "port", port)
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		log.Errorw("failed loading build info")
+	}
+
+	log.Infow("starting", "version", "1.0.0", "port", port, "build", info.Main.Version)
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 	if err != nil {
 		log.Errorw("error from ListenAndServer", "error", err)

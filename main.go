@@ -222,7 +222,15 @@ func main() {
 		log.Errorw("failed loading build info")
 	}
 
-	log.Infow("starting", "version", "1.0.0", "port", port, "build", info.Main.Version)
+	revision := "unknown"
+	for _, s := range info.Settings {
+		if s.Key == "vcs.revision" {
+			revision = s.Value
+			break
+		}
+	}
+
+	log.Infow("starting", "version", "1.0.0", "port", port, "build", revision)
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
 	if err != nil {
 		log.Errorw("error from ListenAndServer", "error", err)

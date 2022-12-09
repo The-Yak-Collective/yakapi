@@ -13,11 +13,11 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/The-Yak-Collective/yakapi/internal/ci"
+	mw "github.com/The-Yak-Collective/yakapi/internal/mw"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rhettg/batteries/yakapi/internal/ci"
-	mw "github.com/rhettg/batteries/yakapi/internal/mw"
 	"tailscale.com/client/tailscale"
 )
 

@@ -30,7 +30,7 @@ $ curl -s http://localhost:8080/v1 | jq .
     },
     {
       "name": "project",
-      "ref": "https://github.com/rhettg/batteries/yakapi"
+      "ref": "https://github.com/The-Yak-Collective/yakapi"
     }
   ]
 }

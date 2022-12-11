@@ -1,6 +1,9 @@
 # YakAPI Server
 
-The YakAPI Server is meant to run on Rovers to provide an API for it.
+The YakAPI Server provides an API for [Yak
+Rovers](https://github.com/The-Yak-Collective/yakrover). It is intended to
+provide a generic interface and allow specific rovers to implement functionality
+appropriate for their hardware, capabilities and purpose.
 
 ## Usage
 
@@ -51,11 +54,12 @@ $ script/server
 
 ### Production
 
-Sky is the limit, but for easy integration a `Dockerfile` is provided that is easily customized by environment variables.
+Sky is the limit, but for easy integration a docker image is available for both
+amd64 and arm7 (raspberry pi) platforms:
 
 ```ShellSession
 
-$ docker build -f Dockerfile -t yakapi:latest .
+$ docker pull docker pull ghcr.io/the-yak-collective/yakapi:latest
 ...
 $ docker run --rm \
   -p 80:8080 \
@@ -64,11 +68,11 @@ $ docker run --rm \
   -v /var/motor:/var/motor \
   -e YAKAPI_CAM_CAPTURE_PATH="/var/cam/capture.jpeg" \
   -v /var/cam:/var/cam \
- yakapi:latest 
+ ghcr.io/the-yak-collective/yakapi:latest
 ...
 ```
 
-The only tricky part is correctly mounting any external dependencies such as
+The tricky part is correctly mounting any external dependencies such as
 script hooks and camera images into the container.
 
 ### Configuration

@@ -1,0 +1,28 @@
+---
+name: deploy-yak-prime
+run-name: deploying to yak-prime
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+jobs: 
+  deployment:
+    runs-on: ubuntu-latest
+    environment: yak-prime
+    concurrency: yak-prime
+    steps:
+    - name: Tailscale
+      uses: tailscale/github-action@v1
+      with:
+        authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+        cache: true
+        cache-dependency-path: yakapi/go.sum
+    - run: cd yakapi && go build -o bin/yakapi.${{ github.sha }} .
+    - run: scp -o 'StrictHostKeyChecking no' yakapi/bin/* github@yak-prime:/var/yakapi
+    - run: ssh github@yak-prime "ln -sf /var/yakapi/yakapi.${{ github.sha }} /var/yakapi/current && sudo /bin/systemctl restart yakapi"
+    - run: curl -v http://yak-prime/v1

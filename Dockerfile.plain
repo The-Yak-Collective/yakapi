@@ -1,7 +1,7 @@
 FROM scratch
 
-ARG platform=arm
-ADD bin/yakapi-${platform} /yakapi
+ARG ARCH=arm
+ADD bin/yakapi-${ARCH} /yakapi
 
 ENV YAKAPI_PORT=8080
 ENV YAKAPI_NAME="Yak Rover"

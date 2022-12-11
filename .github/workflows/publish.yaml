@@ -11,7 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  docker-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -39,8 +39,10 @@ jobs:
         with:
           go-version: 1.19
           cache: true
-      - name: Build
+      - name: Build arm7
         run: GOOS=linux GOARCH=arm GOARM=7 script/build
+      - name: Build amd64
+        run: GOOS=linux GOARCH=amd64 script/build
       - name: Build Image
         uses: docker/build-push-action@v3
         with:
@@ -48,5 +50,5 @@ jobs:
           file: Dockerfile.plain
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          platforms: linux/arm/v7
+          platforms: linux/arm/v7,linux/amd64
           push: true

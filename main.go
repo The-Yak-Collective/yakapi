@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime/debug"
@@ -39,7 +38,11 @@ func eyes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+
+	_, err = w.Write(content)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to write response:", err)
+	}
 }
 
 type resource struct {
@@ -60,12 +63,14 @@ var (
 	})
 )
 
-func errorResponse(w http.ResponseWriter, respErr error, statusCode int) error {
+func errorResponse(w http.ResponseWriter, respErr error, statusCode int) {
 	resp := struct {
 		Error string `json:"error"`
 	}{Error: respErr.Error()}
 
-	return sendResponse(w, resp, statusCode)
+	if err := sendResponse(w, resp, statusCode); err != nil {
+		fmt.Fprintln(os.Stderr, "failed to send error response:", err)
+	}
 }
 
 func sendResponse(w http.ResponseWriter, resp interface{}, statusCode int) error {
@@ -80,7 +85,8 @@ func sendResponse(w http.ResponseWriter, resp interface{}, statusCode int) error
 }
 
 func me(w http.ResponseWriter, r *http.Request) {
-	whois, err := tailscale.WhoIs(r.Context(), r.RemoteAddr)
+	lc := tailscale.LocalClient{}
+	whois, err := lc.WhoIs(r.Context(), r.RemoteAddr)
 	if err != nil {
 		errorResponse(w, errors.New("unknown"), http.StatusInternalServerError)
 		log.Errorw("whois failure", "error", err)
@@ -156,7 +162,7 @@ func handleCamCapture(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	content, err := ioutil.ReadFile(captureFile)
+	content, err := os.ReadFile(captureFile)
 	if err != nil {
 		errorResponse(w, err, http.StatusInternalServerError)
 		return
@@ -164,7 +170,10 @@ func handleCamCapture(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+	_, err = w.Write(content)
+	if err != nil {
+		fmt.Printf("failed writing response: %v", err)
+	}
 }
 
 func homev1(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +219,13 @@ var log *zap.SugaredLogger
 
 func main() {
 	logger, _ := zap.NewDevelopment()
-	defer logger.Sync() // flushes buffer, if any
+
+	defer func() {
+		if err := logger.Sync(); err != nil {
+			fmt.Fprintln(os.Stderr, "failed to sync logger", err)
+		}
+	}()
+
 	log = logger.Sugar()
 
 	promauto.NewGaugeFunc(prometheus.GaugeOpts{

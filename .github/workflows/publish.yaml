@@ -1,4 +1,4 @@
-name: ci
+name: publish
 
 on:
   push:
@@ -43,15 +43,15 @@ jobs:
         with:
           go-version: 1.19
           cache: true
-      - name: Build arm7
-        run: GOOS=linux GOARCH=arm GOARM=7 script/build
-      - name: Build amd64
-        run: GOOS=linux GOARCH=amd64 script/build
+      #- name: Build arm7
+        #run: GOOS=linux GOARCH=arm GOARM=7 script/build
+      #- name: Build amd64
+        #run: GOOS=linux GOARCH=amd64 script/build
       - name: Build Image
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Dockerfile.plain
+          file: Dockerfile
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: linux/arm/v7,linux/amd64

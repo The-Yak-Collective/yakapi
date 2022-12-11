@@ -1,4 +1,6 @@
 #!/bin/bash
 set -e
 
-go build -o bin/yakapi .
+GOARCH=$(go env GOARCH)
+
+go build -o bin/yakapi-${GOARCH} .

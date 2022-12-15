@@ -12,10 +12,12 @@ RUN CGO_ENABLED=0 go build -v -o /yakapi .
 # TODO: scratch is probably too restrictive
 FROM scratch
 COPY --from=0 /yakapi /yakapi
+COPY testdata/mars.jpeg /var/mars.jpeg
 
 ENV YAKAPI_PORT=8080
 ENV YAKAPI_NAME="Yak Bot"
 ENV YAKAPI_PROJECT_URL="https://github.com/The-Yak-Collective/yakrover"
 ENV YAKAPI_ADAPTER_MOTOR="echo"
+ENV YAKAPI_CAM_CAPTURE_PATH="/var/mars.jpeg"
 
 CMD ["/yakapi"]

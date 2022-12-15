@@ -64,10 +64,6 @@ $ docker pull docker pull ghcr.io/the-yak-collective/yakapi:latest
 $ docker run --rm \
   -p 80:8080 \
   -e YAKAPI_NAME="My Rover" \
-  -e YAKAPI_MOTOR_ADAPTER="/var/motor/motor.py" \
-  -v /var/motor:/var/motor \
-  -e YAKAPI_CAM_CAPTURE_PATH="/var/cam/capture.jpeg" \
-  -v /var/cam:/var/cam \
  ghcr.io/the-yak-collective/yakapi:latest
 ...
 ```
@@ -106,4 +102,8 @@ This service translates commands into motor settings.
 
 ### cam
 
-The camera component can current serve an image if placed in a configured path.
+The camera component can serve an image if placed in the path configured by
+`YAKAPI_CAM_CAPTURE_PATH`.
+
+In development, simply visit http://localhost:8080/v1/cam/capture in a browser
+to see your "Rover"'s view of Mars.

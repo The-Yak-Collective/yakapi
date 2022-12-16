@@ -82,7 +82,7 @@ Configuration is primarily through environment variables
 * `YAKAPI_PORT` [default `8080`] port for api server to listen on
 * `YAKAPI_NAME` [default `YakBot`] name for rover 
 * `YAKAPI_PROJECT_URL` [default `https://github.com/The-Yak-Collective/yakrover`] URL for more information
-* `YAKAPI_ADAPTER_MOTOR` [default `echo`] command to be executed to interact with motors
+* `YAKAPI_CI_ADAPTER` [default `cat`] command to be executed for running commands)
 * `YAKAPI_CAM_CAPTURE_PATH` path to image for camera.
 
 ## Components
@@ -102,7 +102,20 @@ yakapi_processed_ops_total 0
 
 ### ci (command injection)
 
-This service translates commands into motor settings. 
+This service injects commands into the Rover provided CI Adapter
+(YAKAPI_CI_ADAPTER). The API simply takes any input in the request body and
+forwards it to the configured adapter. 
+
+In development, the `cat` command is configured resulting in output like this:
+
+```ShellSession
+$ echo "hi there" | script/ci
+{"result":"ok","output":"hi there\n"}
+```
+
+Rover operators should configure yakapi with an executable that will interpret
+the commands appropriately for the platform. For example, a python script might
+translate commands into motor velocities.
 
 ### cam
 

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+set -e
+
+curl -sL -X POST --data-binary @- --no-buffer http://localhost:8080/v1/ci

@@ -111,30 +111,22 @@ func me(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleCI(w http.ResponseWriter, r *http.Request) {
+	adapter := os.Getenv("YAKAPI_CI_ADAPTER")
+	if adapter == "" {
+		err := errors.New("YAKAPI_CI_ADAPTER not configured")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
+
 	if r.Method != "POST" {
 		errorResponse(w, errors.New("POST required"), http.StatusMethodNotAllowed)
 		return
 	}
 
-	if r.Header.Get("content-type") != "application/json" {
-		errorResponse(w, errors.New("application/json required"), http.StatusUnsupportedMediaType)
-		return
-	}
+	// TODO: Maybe expose things like content-type as env variables
 
-	req := struct {
-		Command string `json:"command"`
-	}{}
-
-	err := json.NewDecoder(r.Body).Decode(&req)
 	defer r.Body.Close()
-
-	if err != nil {
-		log.Errorw("failed parsing body", "error", err)
-		errorResponse(w, errors.New("failed parsing body"), http.StatusBadRequest)
-		return
-	}
-
-	err = ci.Accept(r.Context(), req.Command)
+	output, err := ci.Accept(r.Context(), log, adapter, r.Body)
 	if err != nil {
 		log.Errorw("failed accepting ci command", "error", err)
 		errorResponse(w, err, http.StatusBadRequest)
@@ -143,8 +135,10 @@ func handleCI(w http.ResponseWriter, r *http.Request) {
 
 	resp := struct {
 		Result string `json:"result"`
+		Output string `json:"output"`
 	}{
 		Result: "ok",
+		Output: output,
 	}
 
 	err = sendResponse(w, resp, http.StatusAccepted)

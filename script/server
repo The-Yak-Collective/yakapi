@@ -5,7 +5,7 @@ script/build
 
 export YAKAPI_NAME="YakAPI (development)"
 export YAKAPI_PROJECT="https://github.com/The-Yak-Collective/yakapi"
-export YAKAPI_MOTOR_ADAPTER="echo"
+export YAKAPI_CI_ADAPTER="cat"
 export YAKAPI_CAM_CAPTURE_PATH="./testdata/mars.jpeg"
 
-./bin/yakapi
+./bin/yakapi-$(go env GOARCH)

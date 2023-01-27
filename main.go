@@ -175,10 +175,12 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 
 	resp := struct {
 		Name      string     `json:"name"`
+		Build     string     `json:"build"`
 		UpTime    int64      `json:"uptime"`
 		Resources []resource `json:"resources"`
 	}{
 		Name:   "YakAPI Server",
+		Build:  revision,
 		UpTime: int64(time.Since(startTime).Seconds()),
 		Resources: []resource{
 			{Name: "metrics", Ref: "/metrics"},
@@ -210,6 +212,7 @@ func homev1(w http.ResponseWriter, r *http.Request) {
 }
 
 var log *zap.SugaredLogger
+var revision = "unknown"
 
 func main() {
 	logger, _ := zap.NewDevelopment()
@@ -249,7 +252,6 @@ func main() {
 		log.Errorw("failed loading build info")
 	}
 
-	revision := "unknown"
 	for _, s := range info.Settings {
 		if s.Key == "vcs.revision" {
 			revision = s.Value

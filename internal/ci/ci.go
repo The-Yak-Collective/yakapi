@@ -16,6 +16,9 @@ func Accept(ctx context.Context, log *zap.SugaredLogger, runner string, r io.Rea
 	cmd.Stderr = os.Stderr
 	// put stdout in a buffer and log it
 	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", fmt.Errorf("failed to create pipe: %w", err)
+	}
 
 	log.Infow("running ci adapter", "runner", runner)
 

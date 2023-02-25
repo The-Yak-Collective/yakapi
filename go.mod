@@ -30,9 +30,9 @@ require (
 	go4.org/mem v0.0.0-20210711025021-927187094b94 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20220617031537-928513b29760 // indirect
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f // indirect
-	golang.org/x/net v0.0.0-20220607020251-c690dde0001d // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f // indirect
-	golang.org/x/sys v0.0.0-20220610221304-9f5ed59c137d // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.zx2c4.com/wireguard/windows v0.4.10 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	inet.af/netaddr v0.0.0-20220617031823-097006376321 // indirect

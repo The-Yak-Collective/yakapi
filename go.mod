@@ -1,6 +1,6 @@
 module github.com/The-Yak-Collective/yakapi
 
-go 1.25.0
+go 1.25
 
 require (
 	github.com/prometheus/client_golang v1.13.0

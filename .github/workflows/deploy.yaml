@@ -13,11 +13,11 @@ jobs:
     concurrency: yak-prime
     steps:
     - name: Tailscale
-      uses: tailscale/github-action@v1
+      uses: tailscale/github-action@v4
       with:
         authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-    - uses: actions/checkout@v3
-    - uses: actions/setup-go@v3
+    - uses: actions/checkout@v7
+    - uses: actions/setup-go@v7
       with:
         go-version: 1.19
         cache: true
